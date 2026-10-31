@@ -1,6 +1,9 @@
 
 import bpy
-from .panel import VIEW3D_PT_2d_toolkit_main
+from .panel import (
+    VIEW_MAIN,
+    VIEW_CURVE
+)
 from .operator import OBJECT_OT_create_2d_outline
 
 # Add-on Metadata for Blender 2D Toolkit
@@ -58,7 +61,8 @@ def unregister_properties() -> None:
 # Module Classes
 classes = (
     OBJECT_OT_create_2d_outline,
-    VIEW3D_PT_2d_toolkit_main,
+    VIEW_MAIN,
+    VIEW_CURVE
 )
 
 
