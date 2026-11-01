@@ -1,0 +1,11 @@
+from .curve_const import (
+    MIN_RADIUS, 
+    MAX_RADIUS, 
+    MIN_THICKNESS,
+
+    DEFAULT_RESOLUTION,
+    MIN_RESOLUTION,
+
+    DEFAULT_CAP_RESOLUTION,
+    MIN_CAP_RESOLUTION
+)

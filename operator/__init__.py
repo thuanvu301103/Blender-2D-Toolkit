@@ -1,1 +1,1 @@
-from .outline import OBJECT_OT_create_2d_outline
+from .curve_operator import OT_CURVE_create_custom_curve
