@@ -2,9 +2,13 @@
 import bpy
 from .panel import (
     VIEW3D_PT_MAIN,
-    VIEW3D_PT_CURVE
+    VIEW3D_PT_CURVE,
+    VIEW3D_PT_FACE
 )
-from .operator import OT_CURVE_create_custom_curve
+from .operator import (
+    OT_CURVE_create_custom_curve,
+    OT_FACE_create_custom_face
+)
 from .property import register_properties, unregister_properties
 
 # Add-on Metadata for Blender 2D Toolkit
@@ -19,12 +23,13 @@ bl_info = {
     "category": "Mesh",
 }
 
-
 # Module Classes
 classes = (
     OT_CURVE_create_custom_curve,
+    OT_FACE_create_custom_face,
     VIEW3D_PT_MAIN,
-    VIEW3D_PT_CURVE
+    VIEW3D_PT_CURVE,
+    VIEW3D_PT_FACE
 )
 
 

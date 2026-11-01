@@ -2,10 +2,9 @@ import math
 import bpy
 import bmesh
 from mathutils import Vector
-from ..const import (
+from ..const.curve_const import (
     MIN_RADIUS,
-    MIN_RESOLUTION
-
+    MIN_CURVE_RESOLUTION
 )
 
 class OT_CURVE_create_custom_curve(bpy.types.Operator):
@@ -40,7 +39,7 @@ class OT_CURVE_create_custom_curve(bpy.types.Operator):
         bm = bmesh.new()
 
         # Calculate segment count proportional to arc angle resolution
-        segments = max(MIN_RESOLUTION, int(resolution * (arc_angle_rad / (2 * math.pi))))
+        segments = max(MIN_CURVE_RESOLUTION, int(resolution * (arc_angle_rad / (2 * math.pi))))
 
         inner_verts = []
         outer_verts = []

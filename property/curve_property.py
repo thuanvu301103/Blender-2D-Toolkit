@@ -1,9 +1,12 @@
 import bpy
 from ..const import (
+    PLANE_2D,
+    DEFAULT_PLANE_2D,
+
     MIN_RADIUS,
 
-    DEFAULT_RESOLUTION,
-    MIN_RESOLUTION,
+    DEFAULT_CURVE_RESOLUTION,
+    MIN_CURVE_RESOLUTION,
 
     DEFAULT_CAP_RESOLUTION,
     MIN_CAP_RESOLUTION
@@ -13,12 +16,8 @@ def register_curve_properties() -> None:
     bpy.types.Scene.curve_plane = bpy.props.EnumProperty(
         name="Projection Plane",
         description="Select spatial orientation plane",
-        items=[
-            ("XY", "XY Plane", "Align curve along the XY coordinate plane"),
-            ("XZ", "XZ Plane", "Align curve along the XZ coordinate plane"),
-            ("YZ", "YZ Plane", "Align curve along the YZ coordinate plane"),
-        ],
-        default="XY",
+        items=PLANE_2D,
+        default=DEFAULT_PLANE_2D,
     )
 
     bpy.types.Scene.curve_radius = bpy.props.FloatProperty(
@@ -50,8 +49,8 @@ def register_curve_properties() -> None:
     bpy.types.Scene.curve_resolution = bpy.props.IntProperty(
         name="Resolution",
         description="Number of segments proportional to arc angle resolution",
-        default=DEFAULT_RESOLUTION,
-        min=MIN_RESOLUTION,
+        default=DEFAULT_CURVE_RESOLUTION,
+        min=MIN_CURVE_RESOLUTION,
         max=128,
     )
 
@@ -73,7 +72,6 @@ def register_curve_properties() -> None:
         max=128,
     )
 
-
 def unregister_curve_properties() -> None:
     del bpy.types.Scene.curve_plane
     del bpy.types.Scene.curve_radius
@@ -81,3 +79,4 @@ def unregister_curve_properties() -> None:
     del bpy.types.Scene.curve_arc_angle
     del bpy.types.Scene.curve_resolution
     del bpy.types.Scene.curve_cap_type
+    del bpy.types.Scene.curve_cap_resolution

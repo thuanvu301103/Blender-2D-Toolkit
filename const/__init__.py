@@ -3,9 +3,20 @@ from .curve_const import (
     MAX_RADIUS, 
     MIN_THICKNESS,
 
-    DEFAULT_RESOLUTION,
-    MIN_RESOLUTION,
+    DEFAULT_CURVE_RESOLUTION,
+    MIN_CURVE_RESOLUTION,
 
     DEFAULT_CAP_RESOLUTION,
     MIN_CAP_RESOLUTION
 )
+from .face_const import (
+    DEFAULT_FACE_EYE_BROW_LENGTH,
+    DEFAULT_FACE_EYE_BROW_WIDTH,
+    LEFT_EYE_BROW_POS,
+    RIGHT_EYE_BROW_POS
+)
+from .plane_const import (
+    PLANE_2D,
+    DEFAULT_PLANE_2D
+)
+from .utils import DEFAULT_RESOLUTION
