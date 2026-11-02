@@ -25,7 +25,7 @@ class VIEW3D_PT_IDLE_WAVING(bpy.types.Panel):
 
         col.separator()
         col.operator(
-            "object.create_custom_face",
-            text="Generate Face",
+            "object.create_idle_waving",
+            text="Generate Waving Animation",
             icon="ADD",
         )

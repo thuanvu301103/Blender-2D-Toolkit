@@ -9,7 +9,8 @@ from .panel import (
 )
 from .operator import (
     OT_CURVE_create_custom_curve,
-    OT_FACE_create_custom_face
+    OT_FACE_create_custom_face,
+    OT_IDLE_create_idle_waving,
 )
 from .property import register_properties, unregister_properties
 
@@ -29,6 +30,7 @@ bl_info = {
 classes = (
     OT_CURVE_create_custom_curve,
     OT_FACE_create_custom_face,
+    OT_IDLE_create_idle_waving,
     #VIEW3D_PT_MAIN,
     VIEW3D_PT_CURVE,
     VIEW3D_PT_FACE,

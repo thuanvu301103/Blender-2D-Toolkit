@@ -1,4 +1,13 @@
 import bpy
+from ...const.idle_const import (
+    DEFAULT_IDLE_WAVING_ANGLE,
+    MIN_IDLE_WAVING_ANGLE,
+    MAX_IDLE_WAVING_ANGLE,
+    DEFAULT_IDLE_WAVING_DURATION,
+    MIN_IDLE_WAVING_DURATION,
+    MAX_IDLE_WAVING_DURATION,
+    IDLE_WAVING_DURATION_PRECISION,
+)
 from ...const.plane_const import DEFAULT_PLANE_2D, PLANE_2D
 
 def get_applicable_targets(self, context) -> list[tuple]:
@@ -73,19 +82,19 @@ def register_idle_waving_properties() -> None:
     bpy.types.Scene.idle_waving_angle = bpy.props.FloatProperty(
         name="Rotation Angle",
         description="Maximum angular displacement amplitude for the oscillatory rotation",
-        default=15.0,
-        min=-360.0,
-        max=360.0
+        default=DEFAULT_IDLE_WAVING_ANGLE,
+        min=MIN_IDLE_WAVING_ANGLE,
+        max=MAX_IDLE_WAVING_ANGLE
     )
 
     # Property for complete animation cycle duration (measured in seconds)
     bpy.types.Scene.idle_waving_duration = bpy.props.FloatProperty(
         name="Cycle Duration",
         description="Time duration required to complete a single oscillation cycle",
-        default=1.0,
-        min=0.01,
-        max=60.0,
-        precision=2
+        default=DEFAULT_IDLE_WAVING_DURATION,
+        min=MIN_IDLE_WAVING_DURATION,
+        max=MAX_IDLE_WAVING_DURATION,
+        precision=IDLE_WAVING_DURATION_PRECISION
     )
 
 
