@@ -2,9 +2,9 @@ import bpy
 
 class VIEW3D_PT_FACE(bpy.types.Panel):
 
-    bl_label = "Create Face"
+    bl_label = "Face"
     bl_idname = "VIEW3D_PT_FACE"
-    bl_parent_id = "VIEW3D_PT_MAIN"
+    #bl_parent_id = "VIEW3D_PT_MAIN"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "2D Toolkit"

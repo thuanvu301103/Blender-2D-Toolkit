@@ -1,9 +1,11 @@
 
 import bpy
 from .panel import (
-    VIEW3D_PT_MAIN,
+    #VIEW3D_PT_MAIN,
     VIEW3D_PT_CURVE,
-    VIEW3D_PT_FACE
+    VIEW3D_PT_FACE,
+    VIEW3D_PT_IDLE,
+    VIEW3D_PT_IDLE_WAVING
 )
 from .operator import (
     OT_CURVE_create_custom_curve,
@@ -27,9 +29,11 @@ bl_info = {
 classes = (
     OT_CURVE_create_custom_curve,
     OT_FACE_create_custom_face,
-    VIEW3D_PT_MAIN,
+    #VIEW3D_PT_MAIN,
     VIEW3D_PT_CURVE,
-    VIEW3D_PT_FACE
+    VIEW3D_PT_FACE,
+    VIEW3D_PT_IDLE,
+    VIEW3D_PT_IDLE_WAVING
 )
 
 

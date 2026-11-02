@@ -1,0 +1,1 @@
+from .idle_waving_panel import VIEW3D_PT_IDLE_WAVING
