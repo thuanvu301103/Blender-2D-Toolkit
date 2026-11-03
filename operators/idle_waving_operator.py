@@ -12,15 +12,24 @@ from ..consts.idle_const import (
 from .utils import apply_cycles_modifier
 from ..consts.plane_const import DEFAULT_PLANE_2D
 
+from .idle_operator import OT_IDLE_create_idle_template
 
-class OT_IDLE_create_idle_waving(bpy.types.Operator):
+
+class OT_IDLE_create_idle_waving(OT_IDLE_create_idle_template):
     """Create a single oscillation cycle on the selected object or pose bone."""
 
     bl_idname = "object.create_idle_waving"
     bl_label = "Generate Waving Animation"
     bl_options = {"REGISTER", "UNDO"}
 
-    def execute(self, context: bpy.types.Context) -> set[str]:
+    def get_target(self, context: bpy.types.Context) -> str:
+        return context.scene.idle_waving_target
+
+    def get_projected_plan(self, context: bpy.types.Context) -> str:
+        return context.scene.idle_waving_plane
+        
+
+    '''def execute(self, context: bpy.types.Context) -> set[str]:
         scene = context.scene
         target_id = scene.idle_waving_target
         if not target_id or target_id == "NONE":
@@ -165,6 +174,8 @@ class OT_IDLE_create_idle_waving(bpy.types.Operator):
             + (f" > {pose_bone.name}." if pose_bone is not None else "."),
         )
         return {"FINISHED"}
+    
+    '''
 
 
 class OT_IDLE_reset_idle_waving_defaults(bpy.types.Operator):
