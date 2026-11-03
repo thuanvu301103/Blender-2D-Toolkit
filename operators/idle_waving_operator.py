@@ -27,7 +27,21 @@ class OT_IDLE_create_idle_waving(OT_IDLE_create_idle_template):
 
     def get_projected_plan(self, context: bpy.types.Context) -> str:
         return context.scene.idle_waving_plane
-        
+
+    def get_duration(self, context: bpy.types.Context) -> float:
+        return context.scene.idle_waving_duration
+
+    def get_loop(self, context: bpy.types.Context) -> bool:
+        return context.scene.idle_waving_loop
+    
+    def get_loop_repeat_count(self, context: bpy.types.Context) -> int:
+        return context.scene.idle_waving_repeat_count
+
+    def get_interpolation(self, context: bpy.types.Context) -> str:
+        return context.scene.idle_waving_interpolation
+
+    def get_easing(self, context: bpy.types.Context) -> str:
+        return context.scene.idle_waving_easing
 
     '''def execute(self, context: bpy.types.Context) -> set[str]:
         scene = context.scene

@@ -1,8 +1,6 @@
 import math
 import bpy
-from abc import ABC
 
-from .utils import apply_cycles_modifier
 
 # Idle action template class (Template Method Pattern)
 class OT_IDLE_create_idle_template(bpy.types.Operator):
@@ -15,7 +13,27 @@ class OT_IDLE_create_idle_template(bpy.types.Operator):
         """Return the scene projected plan property name. Must be implemented by subclasses."""
         raise NotImplementedError("Subclasses must implement get_projected_plan().")
 
-    
+    def get_duration(self, context: bpy.types.Context) -> str:
+        """Return the scene duration property name. Must be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement get_duration().")
+
+    def get_loop(self, context: bpy.types.Context) -> bool:
+        """Return the scene loop property name. Must be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement get_loop().")
+
+    def get_loop_repeat_count(self, context: bpy.types.Context) -> int:
+        """Return the scene loop repeat count property name. Must be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement get_loop_repeat_count().")
+
+    def get_interpolation(self, context: bpy.types.Context) -> str:
+        """Return the keyframe interpolation mode (e.g. 'LINEAR', 'SINE'). Must be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement get_interpolation().")
+
+    def get_easing(self, context: bpy.types.Context) -> str:
+        """Return the keyframe easing mode (e.g. 'EASE_IN_OUT'). Must be implemented by subclasses."""
+        raise NotImplementedError("Subclasses must implement get_easing().")
+
+
     def resolve_target(self, context: bpy.types.Context):
 
         target_obj = None
@@ -46,41 +64,117 @@ class OT_IDLE_create_idle_template(bpy.types.Operator):
         return target_obj, pose_bone 
 
 
+    def resolve_frames(self, context: bpy.types.Context):
+        scene = context.scene
+        fps_base = scene.render.fps_base
+        if fps_base <= 0:
+            self.report({"ERROR"}, "The scene frame-rate base must be greater than zero.")
+            return None
+
+        total_frames = max(
+            2,
+            round(self.get_duration(context) * scene.render.fps / fps_base),
+        )
+        start_frame = scene.frame_current
+        frames = [
+            start_frame + total_frames * fraction
+            for fraction in (0.0, 0.5, 1.0)
+        ]
+        return frames
+
+
+    def find_fcurves(self, target_obj: bpy.types.Object, data_path: str, axis_indices) -> list[bpy.types.FCurve]:
+        """
+        Return the F-curves of the target's action matching the data path and any of the axis indices.
+
+        Args:
+            target_obj: The object owning the animation data.
+            data_path: The animated property path (e.g. 'rotation_euler' or a pose bone path).
+            axis_indices: Array indices of the animated axes (one F-curve per axis).
+        """
+        action = target_obj.animation_data.action
+        if hasattr(action, "fcurves"):
+            fcurves = action.fcurves
+        else:
+            action_slot = target_obj.animation_data.action_slot
+            fcurves = []
+            if action_slot is not None:
+                for layer in action.layers:
+                    for strip in layer.strips:
+                        if strip.type != "KEYFRAME":
+                            continue
+                        channelbag = strip.channelbag(action_slot)
+                        if channelbag is not None:
+                            fcurves.extend(channelbag.fcurves)
+
+        return [
+            curve
+            for curve in fcurves
+            if curve.data_path == data_path and curve.array_index in axis_indices
+        ]
+
+
+    def apply_interpolation(self, context: bpy.types.Context, fcurves: list[bpy.types.FCurve], frames: list[float]) -> None:
+        """
+        Apply the selected interpolation (and easing, when supported) to the keyframes of each F-curve
+        located at the given frames.
+
+        Args:
+            fcurves: The F-curves whose keyframes are updated.
+            frames: Frames of the generated keyframes; other keyframes are left untouched.
+        """
+        interpolation = self.get_interpolation(context)
+        easing = self.get_easing(context)
+
+        easing_interpolations = {"SINE", "QUAD", "CUBIC"}
+        for fcurve in fcurves:
+            for keyframe in fcurve.keyframe_points:
+                if not any(abs(keyframe.co.x - frame) < 1e-4 for frame in frames):
+                    continue
+                keyframe.interpolation = interpolation
+                if interpolation in easing_interpolations:
+                    keyframe.easing = easing
+
+
+    def apply_cycles_modifier(self, context: bpy.types.Context, fcurves: list[bpy.types.FCurve]) -> None:
+        """
+        Make each F-curve repeat after its last keyframe using a Cycles modifier.
+
+        Args:
+            fcurves: The F-curves to loop.
+        """
+        repeat_count = self.get_loop_repeat_count(context)  # 0 = infinite
+        for fcurve in fcurves:
+            modifier = next((m for m in fcurve.modifiers if m.type == "CYCLES"), None)
+            if modifier is None:
+                modifier = fcurve.modifiers.new(type="CYCLES")
+            modifier.mode_before = "NONE"
+            modifier.mode_after = "REPEAT"
+            modifier.cycles_after = repeat_count
+
+
     def execute(self, context: bpy.types.Context) -> set[str]:
         scene = context.scene
 
-        # Get target obj or bone
+        # 1. Get target obj or bone
         target_obj, pose_bone = self.resolve_target(context)
         if target_obj is None:
             return {"CANCELLED"}
 
-        # Determine the axis index for rotation based on the selected projection plane
+        # 2. Determine the axis index for rotation based on the selected projection plane
         axis_index = {"XY": 2, "XZ": 1, "YZ": 0}.get(self.get_projected_plan(context))
         if axis_index is None:
             self.report({"ERROR"}, "Select a valid projection plane.")
             return {"CANCELLED"}
 
-        # Calculate the total number of frames for the waving cycle based on the scene's frame rate and the specified duration
-        fps_base = scene.render.fps_base
-        if fps_base <= 0:
-            self.report({"ERROR"}, "The scene frame-rate base must be greater than zero.")
+        # 3. Calculate the total number of frames
+        frames = self.resolve_frames(context)
+        if frames is None:
             return {"CANCELLED"}
-
-        total_frames = max(
-            2,
-            round(scene.idle_waving_duration * scene.render.fps / fps_base),
-        )
-        start_frame = scene.frame_current
-        frames = [
-            start_frame + total_frames * fraction
-            for fraction in (0.0, 0.25, 0.5, 0.75, 1.0)
-        ]
         offsets = [
-            0.0,
             math.radians(scene.idle_waving_angle),
-            0.0,
             -math.radians(scene.idle_waving_angle),
-            0.0,
+            math.radians(scene.idle_waving_angle)
         ]
 
         # Determine the animated target (pose bone or object) and ensure its rotation mode is compatible with Euler rotations
@@ -120,52 +214,23 @@ class OT_IDLE_create_idle_template(bpy.types.Operator):
                 frame=frame,
             )
 
-        # Retrieve the fcurve corresponding to the generated rotation animation for the specified axis and 
-        # apply the selected interpolation and easing modes to the keyframes
-        action = target_obj.animation_data.action
-        if hasattr(action, "fcurves"):
-            fcurves = action.fcurves
-        else:
-            action_slot = target_obj.animation_data.action_slot
-            fcurves = []
-            if action_slot is not None:
-                for layer in action.layers:
-                    for strip in layer.strips:
-                        if strip.type != "KEYFRAME":
-                            continue
-                        channelbag = strip.channelbag(action_slot)
-                        if channelbag is not None:
-                            fcurves.extend(channelbag.fcurves)
-
-        fcurve = next(
-            (
-                curve
-                for curve in fcurves
-                if curve.data_path == data_path and curve.array_index == axis_index
-            ),
-            None,
-        )
-        if fcurve is None:
-            self.report({"ERROR"}, "Could not find the generated rotation animation curve.")
+        # 4. Retrieve the generated fcurves (one per animated axis)
+        axis_indices = [axis_index]
+        target_fcurves = self.find_fcurves(target_obj, data_path, axis_indices)
+        if len(target_fcurves) != len(axis_indices):
+            self.report({"ERROR"}, "Could not find the generated animation curves.")
             return {"CANCELLED"}
 
-        interpolation = scene.idle_waving_interpolation
-        easing = scene.idle_waving_easing
+        # 5. Apply Interpolation and Easing
+        self.apply_interpolation(context, target_fcurves, frames)
 
-        easing_interpolations = {"SINE", "QUAD", "CUBIC"}
-        for keyframe in fcurve.keyframe_points:
-            if not any(abs(keyframe.co.x - frame) < 1e-4 for frame in frames):
-                continue
-            keyframe.interpolation = interpolation
-            if interpolation in easing_interpolations:
-                keyframe.easing = easing
-
-        if scene.idle_waving_loop:
-            apply_cycles_modifier(fcurve, scene.idle_waving_repeat_count)
+        # 6. Apply Loop - Cycle
+        if self.get_loop(context):
+            self.apply_cycles_modifier(context, target_fcurves)
 
         self.report(
             {"INFO"},
-            f"Generated waving animation for {target_obj.name}"
+            f"Generated animation for {target_obj.name}"
             + (f" > {pose_bone.name}." if pose_bone is not None else "."),
         )
         return {"FINISHED"}
