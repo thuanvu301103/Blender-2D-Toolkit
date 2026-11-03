@@ -52,6 +52,7 @@ Blender-2D-Toolkit/
     ├── curve_property.py
     ├── face_property.py
     ├── idle_property.py
+    ├── utils.py                # Shared property helpers (e.g. animation target list)
     └── idle_sub_property/      # Waving and Sliding settings
         ├── idle_sliding_property.py
         └── idle_waving_property.py

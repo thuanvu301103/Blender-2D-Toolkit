@@ -6,7 +6,10 @@ from ..consts.idle_const import (
     DEFAULT_IDLE_WAVING_DURATION,
     DEFAULT_IDLE_WAVING_EASING,
     DEFAULT_IDLE_WAVING_INTERPOLATION,
+    DEFAULT_IDLE_WAVING_LOOP,
+    DEFAULT_IDLE_REPEAT_COUNT,
 )
+from .utils import apply_cycles_modifier
 from ..consts.plane_const import DEFAULT_PLANE_2D
 
 
@@ -153,6 +156,9 @@ class OT_IDLE_create_idle_waving(bpy.types.Operator):
             if interpolation in easing_interpolations:
                 keyframe.easing = easing
 
+        if scene.idle_waving_loop:
+            apply_cycles_modifier(fcurve, scene.idle_waving_repeat_count)
+
         self.report(
             {"INFO"},
             f"Generated waving animation for {target_obj.name}"
@@ -177,6 +183,8 @@ class OT_IDLE_reset_idle_waving_defaults(bpy.types.Operator):
         scene.idle_waving_duration = DEFAULT_IDLE_WAVING_DURATION
         scene.idle_waving_interpolation = DEFAULT_IDLE_WAVING_INTERPOLATION
         scene.idle_waving_easing = DEFAULT_IDLE_WAVING_EASING
+        scene.idle_waving_loop = DEFAULT_IDLE_WAVING_LOOP
+        scene.idle_waving_repeat_count = DEFAULT_IDLE_REPEAT_COUNT
         
         self.report({'INFO'}, "Waving parameters reset to defaults")
         return {'FINISHED'}

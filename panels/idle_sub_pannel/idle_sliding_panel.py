@@ -25,13 +25,20 @@ class VIEW3D_PT_IDLE_SLIDING(bpy.types.Panel):
 
         col = layout.column(align=True)
         col.prop(scene, "idle_sliding_target", text="Target")
-        col.prop(scene, "idle_sliding_axis", text="Axis")
+        col.prop(scene, "idle_sliding_plane", text="Plane")
+        col.prop(scene, "idle_sliding_direction", text="Direction Angle")
         col.prop(scene, "idle_sliding_distance", text="Slide Distance")
         col.prop(scene, "idle_sliding_duration", text="Cycle Duration")
         col.separator()
 
         col.prop(scene, "idle_sliding_interpolation", text="Interpolation")
         col.prop(scene, "idle_sliding_easing", text="Easing")
+
+        col.separator()
+        col.prop(scene, "idle_sliding_loop", text="Loop")
+        sub = col.row(align=True)
+        sub.active = scene.idle_sliding_loop
+        sub.prop(scene, "idle_sliding_repeat_count", text="Repeat Count")
 
         col.separator()
         col.operator(

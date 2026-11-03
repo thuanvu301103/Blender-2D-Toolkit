@@ -11,62 +11,13 @@ from ...consts.idle_const import (
     DEFAULT_IDLE_WAVING_INTERPOLATION,
     IDLE_WAVING_EASING_ITEMS,
     DEFAULT_IDLE_WAVING_EASING,
+    DEFAULT_IDLE_WAVING_LOOP,
+    DEFAULT_IDLE_REPEAT_COUNT,
+    MIN_IDLE_REPEAT_COUNT,
+    MAX_IDLE_REPEAT_COUNT,
 )
 from ...consts.plane_const import DEFAULT_PLANE_2D, PLANE_2D
-
-def get_applicable_targets(self, context) -> list[tuple]:
-    """
-    Collect valid scene-level entities and component-level pose bones 
-    with designated icon identifiers for each dropdown menu option.
-    """
-    items = []
-    index_counter = 0
-    
-    for obj in context.scene.objects:
-        if obj.type in {'MESH', 'CURVE', 'ARMATURE'}:
-            obj_identifier = f"OBJ_{obj.name}"
-            
-            # Resolve specific icon identifier based on object type
-            if obj.type == 'ARMATURE':
-                icon_name = "ARMATURE_DATA"
-            elif obj.type == 'CURVE':
-                icon_name = "CURVE_DATA"
-            else:
-                icon_name = "OBJECT_DATA"
-            
-            items.append((
-                obj_identifier, 
-                obj.name, 
-                f"Apply transformation to object: {obj.name}", 
-                icon_name, 
-                index_counter
-            ))
-            index_counter += 1
-            
-            if obj.type == 'ARMATURE':
-                for bone in obj.pose.bones:
-                    bone_identifier = f"BONE_{obj.name}_{bone.name}"
-                    bone_label = f"{obj.name} > {bone.name}"
-                    items.append((
-                        bone_identifier, 
-                        bone_label, 
-                        f"Apply transformation to bone: {bone.name}", 
-                        "BONE_DATA", 
-                        index_counter
-                    ))
-                    index_counter += 1
-                    
-    if not items:
-        items.append((
-            "NONE", 
-            "None Available", 
-            "No valid object or bone targets detected", 
-            "QUESTION", 
-            0
-        ))
-        
-    return items
-
+from ..utils import get_applicable_targets
 
 def register_idle_waving_properties() -> None:
 
@@ -115,6 +66,20 @@ def register_idle_waving_properties() -> None:
         default=DEFAULT_IDLE_WAVING_EASING,
     )
 
+    bpy.types.Scene.idle_waving_loop = bpy.props.BoolProperty(
+        name="Loop",
+        description="Repeat the cycle after the last keyframe using a Cycles F-curve modifier",
+        default=DEFAULT_IDLE_WAVING_LOOP,
+    )
+
+    bpy.types.Scene.idle_waving_repeat_count = bpy.props.IntProperty(
+        name="Repeat Count",
+        description="Number of repetitions after the first cycle (0 repeats forever)",
+        default=DEFAULT_IDLE_REPEAT_COUNT,
+        min=MIN_IDLE_REPEAT_COUNT,
+        max=MAX_IDLE_REPEAT_COUNT,
+    )
+
 
 def unregister_idle_waving_properties() -> None:
 
@@ -124,3 +89,5 @@ def unregister_idle_waving_properties() -> None:
     del bpy.types.Scene.idle_waving_duration
     del bpy.types.Scene.idle_waving_interpolation
     del bpy.types.Scene.idle_waving_easing
+    del bpy.types.Scene.idle_waving_loop
+    del bpy.types.Scene.idle_waving_repeat_count

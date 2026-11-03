@@ -107,3 +107,19 @@ def rotate_object_on_plane(obj: bpy.types.Object, plan: str, degrees: float) -> 
         obj.rotation_euler.x += radians
     else:  # Default configuration for XY plane
         obj.rotation_euler.z += radians
+
+
+def apply_cycles_modifier(fcurve: bpy.types.FCurve, repeat_count: int = 0) -> None:
+    """
+    Make an F-curve repeat after its last keyframe using a Cycles modifier.
+
+    Args:
+        fcurve: The F-curve to loop.
+        repeat_count: Number of extra repetitions after the first cycle (0 = infinite).
+    """
+    modifier = next((m for m in fcurve.modifiers if m.type == "CYCLES"), None)
+    if modifier is None:
+        modifier = fcurve.modifiers.new(type="CYCLES")
+    modifier.mode_before = "NONE"
+    modifier.mode_after = "REPEAT"
+    modifier.cycles_after = repeat_count

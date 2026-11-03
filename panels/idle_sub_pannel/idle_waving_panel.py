@@ -34,6 +34,12 @@ class VIEW3D_PT_IDLE_WAVING(bpy.types.Panel):
         col.prop(scene, "idle_waving_easing", text="Easing")
 
         col.separator()
+        col.prop(scene, "idle_waving_loop", text="Loop")
+        sub = col.row(align=True)
+        sub.active = scene.idle_waving_loop
+        sub.prop(scene, "idle_waving_repeat_count", text="Repeat Count")
+
+        col.separator()
         col.operator(
             "object.create_idle_waving",
             text="Generate Waving Animation",
