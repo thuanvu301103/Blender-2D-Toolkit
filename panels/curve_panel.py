@@ -5,7 +5,7 @@ class VIEW3D_PT_CURVE(bpy.types.Panel):
 
     bl_label = "Create Curve"
     bl_idname = "VIEW3D_PT_CURVE"
-    bl_parent_id = "VIEW3D_PT_MAIN"
+    #bl_parent_id = "VIEW3D_PT_MAIN"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "2D Toolkit"
