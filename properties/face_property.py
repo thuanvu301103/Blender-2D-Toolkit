@@ -1,5 +1,5 @@
 import bpy
-from ..const import (
+from ..consts import (
     PLANE_2D,
     DEFAULT_PLANE_2D
 )

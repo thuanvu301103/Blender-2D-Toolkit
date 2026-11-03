@@ -1,6 +1,6 @@
 import bpy
 from .utils import create_2d_capsule, translate_object_on_plane, rotate_object_on_plane
-from ..const.face_const import (
+from ..consts.face_const import (
     DEFAULT_FACE_EYE_BROW_LENGTH,
     DEFAULT_FACE_EYE_BROW_WIDTH,
     DEFAULT_FACE_EYE_LENGTH,

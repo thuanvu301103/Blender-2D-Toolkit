@@ -1,5 +1,5 @@
 import bpy
-from ...const.idle_const import (
+from ...consts.idle_const import (
     DEFAULT_IDLE_WAVING_ANGLE,
     MIN_IDLE_WAVING_ANGLE,
     MAX_IDLE_WAVING_ANGLE,
@@ -8,7 +8,7 @@ from ...const.idle_const import (
     MAX_IDLE_WAVING_DURATION,
     IDLE_WAVING_DURATION_PRECISION,
 )
-from ...const.plane_const import DEFAULT_PLANE_2D, PLANE_2D
+from ...consts.plane_const import DEFAULT_PLANE_2D, PLANE_2D
 
 def get_applicable_targets(self, context) -> list[tuple]:
     """

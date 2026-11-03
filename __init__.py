@@ -1,18 +1,18 @@
 
 import bpy
-from .panel import (
+from .panels import (
     #VIEW3D_PT_MAIN,
     VIEW3D_PT_CURVE,
     VIEW3D_PT_FACE,
     VIEW3D_PT_IDLE,
     VIEW3D_PT_IDLE_WAVING
 )
-from .operator import (
+from .operators import (
     OT_CURVE_create_custom_curve,
     OT_FACE_create_custom_face,
     OT_IDLE_create_idle_waving,
 )
-from .property import register_properties, unregister_properties
+from .properties import register_properties, unregister_properties
 
 # Add-on Metadata for Blender 2D Toolkit
 

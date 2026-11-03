@@ -3,7 +3,7 @@ import bpy
 class VIEW3D_PT_CURVE(bpy.types.Panel):
     """UI Panel for configuring and generating custom 2D curves."""
 
-    bl_label = "Curve"
+    bl_label = "Create Curve"
     bl_idname = "VIEW3D_PT_CURVE"
     #bl_parent_id = "VIEW3D_PT_MAIN"
     bl_space_type = "VIEW_3D"

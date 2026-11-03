@@ -2,7 +2,7 @@ import math
 import bpy
 import bmesh
 from mathutils import Vector
-from ..const.curve_const import (
+from ..consts.curve_const import (
     MIN_RADIUS,
     MIN_CURVE_RESOLUTION
 )
