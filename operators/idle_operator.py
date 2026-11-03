@@ -34,6 +34,7 @@ class OT_IDLE_create_idle_template(bpy.types.Operator):
         raise NotImplementedError("Subclasses must implement get_easing().")
 
 
+    # --- Step 1: Resolve target ---
     def resolve_target(self, context: bpy.types.Context):
 
         target_obj = None
@@ -64,23 +65,66 @@ class OT_IDLE_create_idle_template(bpy.types.Operator):
         return target_obj, pose_bone 
 
 
-    def resolve_frames(self, context: bpy.types.Context):
-        scene = context.scene
-        fps_base = scene.render.fps_base
-        if fps_base <= 0:
-            self.report({"ERROR"}, "The scene frame-rate base must be greater than zero.")
+    # --- Step 2: Resolve axis affect ---
+    def resolve_axis_effect(self, context: bpy.types.Context) -> tuple[int, int, int] | None:
+        raise NotImplementedError("Subclasses must implement resolve_axis_effect().")
+
+    def resolve_axis_indices(self, axis_effect: tuple[int, int, int]) -> list[int] | None:
+        if len(axis_effect) != 3 or any(axis not in (0, 1) for axis in axis_effect):
+            self.report({"ERROR"}, "Axis effect must contain three 0/1 values for X, Y, and Z.")
             return None
 
-        total_frames = max(
-            2,
-            round(self.get_duration(context) * scene.render.fps / fps_base),
-        )
-        start_frame = scene.frame_current
-        frames = [
-            start_frame + total_frames * fraction
-            for fraction in (0.0, 0.5, 1.0)
+        axis_indices = [
+            index
+            for index, affects_axis in enumerate(axis_effect)
+            if affects_axis == 1
         ]
-        return frames
+        if not axis_indices:
+            self.report({"ERROR"}, "At least one axis must be selected.")
+            return None
+        return axis_indices
+
+
+    # --- Step 3: Resolve frames and offset of each frame ---
+    def resolve_frames(self, context: bpy.types.Context) -> tuple[list[float] | None, list[float] | None]:
+        raise NotImplementedError("Subclasses must implement resolve_frames().")
+
+
+    def insert_keyframes(
+        self,
+        animated_target: bpy.types.Object | bpy.types.PoseBone,
+        axis_indices: list[int],
+        frames: list[float],
+        offsets: list[float],
+    ) -> bool:
+        raise NotImplementedError("Subclasses must implement insert_keyframes().")
+
+
+    def ensure_animation_action(
+        self,
+        target_obj: bpy.types.Object,
+        pose_bone: bpy.types.PoseBone | None = None,
+    ) -> bpy.types.Action:
+        if target_obj.animation_data is None:
+            target_obj.animation_data_create()
+
+        if target_obj.animation_data.action is None:
+            action_name = (
+                f"{target_obj.name}_{pose_bone.name}_IdleAction"
+                if pose_bone is not None
+                else f"{target_obj.name}_IdleAction"
+            )
+            target_obj.animation_data.action = bpy.data.actions.new(name=action_name)
+
+        return target_obj.animation_data.action
+
+
+    def resolve_animation_target(
+        self,
+        target_obj: bpy.types.Object,
+        pose_bone: bpy.types.PoseBone | None = None,
+    ) -> tuple[bpy.types.Object | bpy.types.PoseBone, str]:
+        raise NotImplementedError("Subclasses must implement resolve_animation_target().")
 
 
     def find_fcurves(self, target_obj: bpy.types.Object, data_path: str, axis_indices) -> list[bpy.types.FCurve]:
@@ -148,83 +192,58 @@ class OT_IDLE_create_idle_template(bpy.types.Operator):
             modifier = next((m for m in fcurve.modifiers if m.type == "CYCLES"), None)
             if modifier is None:
                 modifier = fcurve.modifiers.new(type="CYCLES")
-            modifier.mode_before = "NONE"
+            modifier.mode_before = "REPEAT"
             modifier.mode_after = "REPEAT"
             modifier.cycles_after = repeat_count
 
 
+    # --- MAIN FUNCTION ---
     def execute(self, context: bpy.types.Context) -> set[str]:
         scene = context.scene
 
-        # 1. Get target obj or bone
+        # Step 1: Resolve the selected object or pose bone.
         target_obj, pose_bone = self.resolve_target(context)
         if target_obj is None:
             return {"CANCELLED"}
 
-        # 2. Determine the axis index for rotation based on the selected projection plane
-        axis_index = {"XY": 2, "XZ": 1, "YZ": 0}.get(self.get_projected_plan(context))
-        if axis_index is None:
-            self.report({"ERROR"}, "Select a valid projection plane.")
+        # Step 2: Resolve the axes affected by the selected projection plane.
+        axis_effect = self.resolve_axis_effect(context)
+        if axis_effect is None:
+            return {"CANCELLED"}
+        axis_indices = self.resolve_axis_indices(axis_effect)
+        if axis_indices is None:
             return {"CANCELLED"}
 
-        # 3. Calculate the total number of frames
-        frames = self.resolve_frames(context)
-        if frames is None:
+        # Step 3: Calculate the keyframe times and animation offsets.
+        frames, offsets = self.resolve_frames(context)
+        if frames is None or offsets is None:
             return {"CANCELLED"}
-        offsets = [
-            math.radians(scene.idle_waving_angle),
-            -math.radians(scene.idle_waving_angle),
-            math.radians(scene.idle_waving_angle)
-        ]
 
-        # Determine the animated target (pose bone or object) and ensure its rotation mode is compatible with Euler rotations
-        animated_target = pose_bone if pose_bone is not None else target_obj
-        if animated_target.rotation_mode not in {
-            "XYZ", "XZY", "YXZ", "YZX", "ZXY", "ZYX"
-        }:
-            animated_target.rotation_mode = "XYZ"
+        # Step 4: Resolve the animated property and its F-Curve data path.
+        animated_target, data_path = self.resolve_animation_target(target_obj, pose_bone)
 
-        base_rotation = list(animated_target.rotation_euler)
-        data_path = (
-            pose_bone.path_from_id("rotation_euler")
-            if pose_bone is not None
-            else "rotation_euler"
-        )
+        # Step 5: Ensure the object has an action to store the keyframes.
+        self.ensure_animation_action(target_obj, pose_bone)
 
-        # Ensure the target object has animation data and an action to store the generated keyframes
-        if target_obj.animation_data is None:
-            target_obj.animation_data_create()
+        # Step 6: Insert keyframes for each affected axis.
+        if not self.insert_keyframes(
+            animated_target,
+            axis_indices,
+            frames,
+            offsets,
+        ):
+            return {"CANCELLED"}
 
-        if target_obj.animation_data.action is None:
-            action_name = (
-                f"{target_obj.name}_{pose_bone.name}_WavingAction"
-                if pose_bone is not None
-                else f"{target_obj.name}_WavingAction"
-            )
-            target_obj.animation_data.action = bpy.data.actions.new(name=action_name)
-
-        # Generate keyframes for the waving animation by modifying the rotation of the animated target at specified frames and offsets
-        for frame, offset in zip(frames, offsets):
-            rotation = base_rotation.copy()
-            rotation[axis_index] += offset
-            animated_target.rotation_euler = rotation
-            animated_target.keyframe_insert(
-                data_path="rotation_euler",
-                index=axis_index,
-                frame=frame,
-            )
-
-        # 4. Retrieve the generated fcurves (one per animated axis)
-        axis_indices = [axis_index]
+        # Step 7: Find the F-Curves created for the animated axes.
         target_fcurves = self.find_fcurves(target_obj, data_path, axis_indices)
         if len(target_fcurves) != len(axis_indices):
             self.report({"ERROR"}, "Could not find the generated animation curves.")
             return {"CANCELLED"}
 
-        # 5. Apply Interpolation and Easing
+        # Step 8: Apply interpolation and easing to the generated keyframes.
         self.apply_interpolation(context, target_fcurves, frames)
 
-        # 6. Apply Loop - Cycle
+        # Step 9: Add cycle modifiers when looping is enabled.
         if self.get_loop(context):
             self.apply_cycles_modifier(context, target_fcurves)
 
