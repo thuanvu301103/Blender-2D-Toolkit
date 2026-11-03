@@ -1,3 +1,3 @@
 from .curve_operator import OT_CURVE_create_custom_curve
 from .face_operator import OT_FACE_create_custom_face
-from .idle_waving_operator import OT_IDLE_create_idle_waving
+from .idle_waving_operator import *

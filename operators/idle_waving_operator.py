@@ -1,6 +1,13 @@
 import math
 
 import bpy
+from ..consts.idle_const import (
+    DEFAULT_IDLE_WAVING_ANGLE,
+    DEFAULT_IDLE_WAVING_DURATION,
+    DEFAULT_IDLE_WAVING_EASING,
+    DEFAULT_IDLE_WAVING_INTERPOLATION,
+)
+from ..consts.plane_const import DEFAULT_PLANE_2D
 
 
 class OT_IDLE_create_idle_waving(bpy.types.Operator):
@@ -9,31 +16,6 @@ class OT_IDLE_create_idle_waving(bpy.types.Operator):
     bl_idname = "object.create_idle_waving"
     bl_label = "Generate Waving Animation"
     bl_options = {"REGISTER", "UNDO"}
-
-    interpolation_mode: bpy.props.EnumProperty(
-        name="Interpolation",
-        description="Interpolation method for the generated keyframes",
-        items=(
-            ("BEZIER", "Bezier", "Smooth Bezier interpolation"),
-            ("LINEAR", "Linear", "Linear interpolation"),
-            ("SINE", "Sine", "Sine easing"),
-            ("QUAD", "Quadratic", "Quadratic easing"),
-            ("CUBIC", "Cubic", "Cubic easing"),
-        ),
-        default="BEZIER",
-    )
-
-    easing_mode: bpy.props.EnumProperty(
-        name="Easing",
-        description="Easing direction for easing interpolation methods",
-        items=(
-            ("AUTO", "Automatic", "Automatic easing"),
-            ("EASE_IN", "Ease In", "Accelerate at the start"),
-            ("EASE_OUT", "Ease Out", "Decelerate at the end"),
-            ("EASE_IN_OUT", "Ease In Out", "Accelerate and decelerate"),
-        ),
-        default="EASE_IN_OUT",
-    )
 
     def execute(self, context: bpy.types.Context) -> set[str]:
         scene = context.scene
@@ -94,6 +76,7 @@ class OT_IDLE_create_idle_waving(bpy.types.Operator):
             0.0,
         ]
 
+        # Determine the animated target (pose bone or object) and ensure its rotation mode is compatible with Euler rotations
         animated_target = pose_bone if pose_bone is not None else target_obj
         if animated_target.rotation_mode not in {
             "XYZ", "XZY", "YXZ", "YZX", "ZXY", "ZYX"
@@ -107,6 +90,7 @@ class OT_IDLE_create_idle_waving(bpy.types.Operator):
             else "rotation_euler"
         )
 
+        # Ensure the target object has animation data and an action to store the generated keyframes
         if target_obj.animation_data is None:
             target_obj.animation_data_create()
 
@@ -118,6 +102,7 @@ class OT_IDLE_create_idle_waving(bpy.types.Operator):
             )
             target_obj.animation_data.action = bpy.data.actions.new(name=action_name)
 
+        # Generate keyframes for the waving animation by modifying the rotation of the animated target at specified frames and offsets
         for frame, offset in zip(frames, offsets):
             rotation = base_rotation.copy()
             rotation[axis_index] += offset
@@ -128,6 +113,8 @@ class OT_IDLE_create_idle_waving(bpy.types.Operator):
                 frame=frame,
             )
 
+        # Retrieve the fcurve corresponding to the generated rotation animation for the specified axis and 
+        # apply the selected interpolation and easing modes to the keyframes
         action = target_obj.animation_data.action
         if hasattr(action, "fcurves"):
             fcurves = action.fcurves
@@ -155,13 +142,16 @@ class OT_IDLE_create_idle_waving(bpy.types.Operator):
             self.report({"ERROR"}, "Could not find the generated rotation animation curve.")
             return {"CANCELLED"}
 
+        interpolation = scene.idle_waving_interpolation
+        easing = scene.idle_waving_easing
+
         easing_interpolations = {"SINE", "QUAD", "CUBIC"}
         for keyframe in fcurve.keyframe_points:
             if not any(abs(keyframe.co.x - frame) < 1e-4 for frame in frames):
                 continue
-            keyframe.interpolation = self.interpolation_mode
-            if self.interpolation_mode in easing_interpolations:
-                keyframe.easing = self.easing_mode
+            keyframe.interpolation = interpolation
+            if interpolation in easing_interpolations:
+                keyframe.easing = easing
 
         self.report(
             {"INFO"},
@@ -169,3 +159,24 @@ class OT_IDLE_create_idle_waving(bpy.types.Operator):
             + (f" > {pose_bone.name}." if pose_bone is not None else "."),
         )
         return {"FINISHED"}
+
+
+class OT_IDLE_reset_idle_waving_defaults(bpy.types.Operator):
+    
+    bl_idname = "object.reset_idle_waving_defaults"
+    bl_label = "Reset to Default"
+    bl_description = "Reset all waving parameters to their default values"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context: bpy.types.Context) -> set:
+        scene = context.scene
+        
+        # Reset properties to their default values
+        scene.idle_waving_plane = DEFAULT_PLANE_2D
+        scene.idle_waving_angle = DEFAULT_IDLE_WAVING_ANGLE
+        scene.idle_waving_duration = DEFAULT_IDLE_WAVING_DURATION
+        scene.idle_waving_interpolation = DEFAULT_IDLE_WAVING_INTERPOLATION
+        scene.idle_waving_easing = DEFAULT_IDLE_WAVING_EASING
+        
+        self.report({'INFO'}, "Waving parameters reset to defaults")
+        return {'FINISHED'}

@@ -11,6 +11,7 @@ from .operators import (
     OT_CURVE_create_custom_curve,
     OT_FACE_create_custom_face,
     OT_IDLE_create_idle_waving,
+    OT_IDLE_reset_idle_waving_defaults
 )
 from .properties import register_properties, unregister_properties
 
@@ -31,6 +32,7 @@ classes = (
     OT_CURVE_create_custom_curve,
     OT_FACE_create_custom_face,
     OT_IDLE_create_idle_waving,
+    OT_IDLE_reset_idle_waving_defaults,
     #VIEW3D_PT_MAIN,
     VIEW3D_PT_CURVE,
     VIEW3D_PT_FACE,

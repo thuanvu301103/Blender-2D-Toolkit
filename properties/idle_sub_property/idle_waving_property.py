@@ -7,6 +7,10 @@ from ...consts.idle_const import (
     MIN_IDLE_WAVING_DURATION,
     MAX_IDLE_WAVING_DURATION,
     IDLE_WAVING_DURATION_PRECISION,
+    IDLE_WAVING_INTERPOLATION_ITEMS,
+    DEFAULT_IDLE_WAVING_INTERPOLATION,
+    IDLE_WAVING_EASING_ITEMS,
+    DEFAULT_IDLE_WAVING_EASING,
 )
 from ...consts.plane_const import DEFAULT_PLANE_2D, PLANE_2D
 
@@ -97,6 +101,20 @@ def register_idle_waving_properties() -> None:
         precision=IDLE_WAVING_DURATION_PRECISION
     )
 
+    bpy.types.Scene.idle_waving_interpolation = bpy.props.EnumProperty(
+        name="Interpolation",
+        description="Interpolation method for the generated keyframes",
+        items=IDLE_WAVING_INTERPOLATION_ITEMS,
+        default=DEFAULT_IDLE_WAVING_INTERPOLATION,
+    )
+
+    bpy.types.Scene.idle_waving_easing = bpy.props.EnumProperty(
+        name="Easing",
+        description="Easing direction for easing interpolation methods",
+        items=IDLE_WAVING_EASING_ITEMS,
+        default=DEFAULT_IDLE_WAVING_EASING,
+    )
+
 
 def unregister_idle_waving_properties() -> None:
 
@@ -104,3 +122,5 @@ def unregister_idle_waving_properties() -> None:
     del bpy.types.Scene.idle_waving_plane
     del bpy.types.Scene.idle_waving_angle
     del bpy.types.Scene.idle_waving_duration
+    del bpy.types.Scene.idle_waving_interpolation
+    del bpy.types.Scene.idle_waving_easing

@@ -15,13 +15,23 @@ class VIEW3D_PT_IDLE_WAVING(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
 
-        col = layout.column(align=True)
-        col.label(text="Waving Parameters", icon="MOD_WAVE")
+        row = layout.row(align=True)
+        row.label(text="Waving Parameters", icon="MOD_WAVE")
+        row.operator(
+            "object.reset_idle_waving_defaults",
+            text="",
+            icon="FILE_REFRESH"
+        )
 
+        col = layout.column(align=True)
         col.prop(scene, "idle_waving_target", text="Target")
         col.prop(scene, "idle_waving_plane", text="Plane")
         col.prop(scene, "idle_waving_angle", text="Rotation Angle")
         col.prop(scene, "idle_waving_duration", text="Cycle Duration")
+        col.separator()
+
+        col.prop(scene, "idle_waving_interpolation", text="Interpolation")
+        col.prop(scene, "idle_waving_easing", text="Easing")
 
         col.separator()
         col.operator(
